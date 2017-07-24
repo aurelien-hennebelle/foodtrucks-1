@@ -2,31 +2,31 @@
 
 // On définit la liste des pages du site
 $router = [
-// NOM DE LA ROUTE => ["PAGE", "ACCES RESTREINT ?"]
+// NOM DE LA ROUTE => ["PAGE",       "ACCES RESTREINT ?"]
 
   // Page d'accueil
-  "home"            => ["home.php",               false],
+  "home"            => ["home.php",               false], // accueil
 
   // Foodtrucks
-  "foodtrucks"      => ["foodtrucks.php",         false],
-  "foodtruck"       => ["foodtruck.php",          false],
-  "add-foodtruck"   => ["add-foodtruck.php",      true],
-  "edit-foodtruck"  => ["edit-foodtruck.php",     true],
-  "delete-foodtruck"=> ["delete-foodtruck.php",   true],
+  "foodtrucks"      => ["foodtrucks.php",         false], // liste de foodtrucks
+  "foodtruck"       => ["foodtruck.php",          false], // un foodtruck
+  "add-foodtruck"   => ["add-foodtruck.php",      true], // ajouter
+  "edit-foodtruck"  => ["edit-foodtruck.php",     true], // modifier
+  "delete-foodtruck"=> ["delete-foodtruck.php",   true], // effacer
 
 
   // Contact
-  "contact"         => ["contact.php",            false],
+  "contact"         => ["contact.php",            false], // page ajouter un contact
 
   // Users
-  "profile"         => ["profile.php",            true],
-  "settings"        => ["settings.php",           true],
-  "register"        => ["register.php",           false],
-  "login"           => ["login.php",              false],
-  "lostpwd"         => ["lostpwd.php",            false],
-  "renewpwd"        => ["renewpwd.php",           false],
-  "logout"          => [null,                     true],
+  "profile"         => ["profile.php",            true], //profil utilisateur
+  "settings"        => ["settings.php",           true], //reglage du profil utilisateur
+  "register"        => ["register.php",           false], // enregistrement de l'utilisateur
+  "login"           => ["login.php",              false], // connexion de l'utilisateur
+  "lostpwd"         => ["lostpwd.php",            false], // page mot de passe perdu
+  "renewpwd"        => ["renewpwd.php",           false], // page renouveler le mot de passe
+  "logout"          => [null,                     true], // page déconnexion
 
   // Page d'Erreur
-  "404"             => ["404.php",                false]
+  "404"             => ["404.php",                false] // page erreur 404
 ];
