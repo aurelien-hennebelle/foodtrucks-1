@@ -1,5 +1,13 @@
 <?php
 
+//FONCTION TESTER DATE
+/*function testDate( $value )
+ {
+  return preg_match( ''^\d{1,2}/\d{1,2}/\d{4}$'' , $value );
+ }*/
+
+ $month=['01','02','03','04','05','06','07','08','09','10','11','12'];
+
 // Definition des variables par défaut
 $login       = null;
 $password    = null;
@@ -12,25 +20,231 @@ $birth_year  = null;
 
 // Cas où l'utilisateur envoie le formulaire (méthode POST)
 // Contrôle du formulaire
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    
-    /*echo 'Le formulaire est envoyé'.
-    var_dump($_SESSION['token']);
-    var_dump($_POST['token']);*/
+if ($_SERVER['REQUEST_METHOD'] == 'POST') 
+{
 
-    $token=$_POST['token'];
+    $save = true; //On définit la variable de validation du formulaire par défaut à true (valide).
+
+//RECUPERATION DES VALEURS ET CONTROLE DE L'EXISTENCE DES CHAMPS
+    // Recupérer les données de $_POST
+    $login = isset($_POST['login']) ? $_POST['login'] : null;
+        // si existe post-login- => login=post-login; sinon null;
+        // condition             => code à appliquer si condition respectée; sinon null;
+    $token = isset($_POST['token']) ? $_POST['token'] : null;
+    $password    = isset($_POST['password']) ? $_POST['password'] : null;
+    $firstname   = isset($_POST['firstname']) ? $_POST['firstname'] : null;
+    $lastname    = isset($_POST['lastname']) ? $_POST['lastname'] : null;
+    $gender      = isset($_POST['gender']) ? $_POST['gender'] : null;
+    $birth_day   = isset($_POST['birth']['day']) ? $_POST['birth']['day'] : null;
+    $birth_month = isset($_POST['birth']['month']) ? $_POST['birth']['month'] : null;
+    $birth_year  = isset($_POST['birth']['year']) ? $_POST['birth']['year'] : null;
+
+    $date=   $birth_day . '/' . $birth_month . '/'. $birth_year;
+    
+//CONTROLE DES CHAMPS DU FORMULAIRES
+
+    // Controler l'intégrité du token
+    if($_SESSION['token']!==$token)
+    {
+        $save=false; // save passe à false  de manière à invalider le formulaire.
+        setFlashbag("danger","Le token est invalide."); // Les messages d'erreurs s'affichent avec la fonction setFlashbag.
+    }
+
+    // - Controle de l'adresse email
+    // --
+    // -> ne doit pas etre vide
+    // -> doit avoir la syntaxe d'une adresse email valide
+    if (empty($login)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Veuillez saisir un identifiant.");
+    }
+    // -> doit avoir la syntaxe d'une adresse email valide
+    elseif (!filter_var($login, FILTER_VALIDATE_EMAIL)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Veuillez saisir une adresse email valide.");
+    }
+
+    // - Controle du mot de passe
+    // --
+    // -> doit contenir au moins 8 caractères
+    // -> doit contenir au plus 16 caractères
+    if (strlen($password) < 8 || strlen($password) > 16) 
+    {
+        $save = false;
+        setFlashbag("danger", "Le mot de passe doit avoir 8 caractères minimum et 16 caractères maximum.");
+    }
+
+    // -> doit avoir au moins un caractère de type numérique
+    elseif (!preg_match("/[0-9]/", $password)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Le mot de passe doit contenir au moins un caractère numérique.");
+    }
+    // elseif (strlen(filter_var($password, FILTER_SANITIZE_NUMBER_INT)) <= 0) {
+    //     $send = false;
+    //     setFlashbag("danger", "Le mot de passe doit contenir au moins un caractère numérique.");
+    // }
+
+    // -> doit avoir au moins un caractère en majuscule
+    elseif (!preg_match("/[A-Z]/", $password)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Le mot de passe doit contenir au moins un caractère en majuscule.");
+    }
+
+    // -> doit avoir au moins un caractère spécial (#@!=+-_)
+    elseif (!preg_match("/(#|@|!|=|\+|-|_)/", $password)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Le mot de passe doit contenir au moins un caractère spécial (#@!=+-_).");
+    }
+
+    // On Crypte le Mot de passe
+    else 
+    {
+        $password = password_hash($password, PASSWORD_DEFAULT); //!=>CONSTANTE PHP VOIR DOCUMENTATION
+    }
+
+    // - Controle du prénom
+    // --
+    // -> doit être une chaine alphabetique
+    // -> peut contenir un tiret
+    // -> ne doit pas possèder de caractère numérique
+    if (!preg_match("/^[a-z][a-z-]*[a-z]$/i", $firstname)) 
+    {
+        $save = false;
+        setFlashbag("danger", "Vérifiez la syntaxe du prénom");
+    }
+
+    // - Controle du Nom de famille
+    // --
+    // -> doit être une chaine alphabetique
+    // -> peut contenir un tiret
+    // -> ne doit pas possèder de caractère
+    if (!preg_match("/^[a-z][a-z-]*[a-z]$/i", $lastname)) {
+        $save = false;
+        setFlashbag("danger", "Vérifiez la syntaxe du Nom de famille");
+    }
+
+    // - Controle de la date de naissance
+    // --
+    // -> doit etre une date valide
+    if (($birth_month!=null && $birth_day!=null && $birth_year!=null) &&
+        !checkdate($birth_month,$birth_day,$birth_year)) {
+        $save = false;
+        setFlashbag("danger", "Veuillez sélectionner une date de naissance valide");
+    } else {
+        //si birth date==null -> $birthday=0;
+        $birthday = $birth_year."-".$birth_month."-".$birth_day;
+
+    }
+    var_dump($birthday);
+    // -> doit être supérieur à 13ans au moment de l'inscription
+    if (isset($birthday)) {
+      $tz  = new DateTimeZone('Europe/Brussels');
+      $age = DateTime::createFromFormat('Y-m-d', $birthday, $tz)
+             ->diff(new DateTime('now', $tz))
+             ->y;
+      $minAge = 13;
+      if ($age < $minAge) {
+          $save = false;
+          setFlashbag("danger", "Vous devez avoir au moins $minAge ans pour vous inscrire.");
+      }
+    }
+    
+    //function age($birth_month, $birth_day, $birth_year) {
+        // Evaluation de l'âge (à un an par excès)
+        /*$age = date('Y', time()) - $birth_year;
+        if ($birth_month > date('m', time()) || ($birth_month == date('m', time())) && $birth_day >= date('d',time())) {
+            return $age;
+        }
+    }*/
+    /*if (!checkdate($birth_month, $birth_day, $birth_year)) {
+        $save = false;
+        setFlashbag("danger", "Veuillez entrer une date valide.");
+    }
+    elseif ( age($birth_month, $birth_day, $birth_year) < 13 ) {
+        $save = false;
+        setFlashbag("danger", "Vous etes trop jeune pour rentrer.");
+    }*/
+
+    // - Controle le genre
+    // --
+    // -> Le champ doit possèder une valeur (M ou F)
+    if ($gender === null) {
+        $save = false;
+        setFlashbag("danger", "Veuillez sélectionner un genre.");
+    // } elseif ($gender !== "M" && $gender !== "F" && $gender !== "T" && $gender !== "A" ) {
+    } elseif (!preg_match("/^(M|F|T|A){1}$/", $gender)) {
+        $save = false;
+        setFlashbag("danger", "Le genre doit être M, F, T ou A.");
+    }
+
+    // - Controle des conditions d'utilisation du service
+    // --
+    // -> La checkbox doit etre cochée.
+    if (!isset( $_POST['acceptTerms'] )) {
+        $save = false;
+        setFlashbag("danger", "Veuillez accepter les conditions d'utilisation du service.");
+    }
+
+   // - Controle l'existance de l'utilisateur dans la BDD
+// -> L'adresse email ne doit pas etre présente dans la BDD (table users)
+    if ($save) {
+        if (userExists($login)) {
+            $save = false;
+            setFlashbag("danger", "Un utilisateur est déjà enregistré avec l'adresse email $login.");
+        }
+    }
+
+    // On enregistre l'utilisateur dans la BDD
+    if ($save) {
+
+        // Enregistre l'utilisateur
+        $idUser = addUser(array(
+            "firstname" => $firstname,
+            "lastname" => $lastname,
+            "login" => $login,
+            "password" => $password,
+            "gender" => $gender,
+            "birthday" => $birthday
+        ));
+
+        // Identification de l'utilisateur
+        $_SESSION['user']=[
+        "id"=>$idUser,
+        "firstname"=>$firstname,
+        "lastname"=>$lastname,
+        "email"=>$login,
+        "roles"=>$default_users_roles
+        ];
+
+        //Flashbag Success
+        setFlashbag("success","bienvenu(e) $firstname .");
+
+        // Destruction du token
+        unset($_SESSION['token']);
+
+        // Redirection de l'utilisateur
+        header("location: index.php?page=profile");
+        exit;
+    }
+    /* pas de else{} => comme ça le script se termine. Le formulaire s'affiche et affiche les messages d'erreurs avec setFlashbag */
 
 }
 
 // Cas où l'utilisateur arrive sur la page sans envoyer le formulaire (méthode GET)
-else {
-
-    /*var_dump(md5(uniqid()));*/
-
-    //Définition du token
-    $_SESSION['token']=getToken();
-
+else 
+{ // Dans ce cas, la requète est un GET non un post.
+    // création du token quand l'utilisateur arrive sur la page formulaire.
+    $_SESSION['token'] = getToken();
 }
+
+
+//----------------------------FIN DU CODE PHP DE VALIDATION DU FORMULAIRE------------------------------------------------------------------//
+
 ?>
 
 <div class="page-header">
