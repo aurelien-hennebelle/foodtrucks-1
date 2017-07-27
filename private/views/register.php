@@ -44,7 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 //CONTROLE DES CHAMPS DU FORMULAIRES
 
     // Controler l'intégrité du token
-    if($_SESSION['token']!==$token)
+    if( (isset($_SESSION['token']) )||
+        (empty($_SESSION['token']) )||
+        ($_SESSION['token']!==$token) )
     {
         $save=false; // save passe à false  de manière à invalider le formulaire.
         setFlashbag("danger","Le token est invalide."); // Les messages d'erreurs s'affichent avec la fonction setFlashbag.
@@ -130,9 +132,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 
     // - Controle de la date de naissance
     // --
-    // -> doit etre une date valide
-    if (($birth_month!=null && $birth_day!=null && $birth_year!=null) &&
-        !checkdate($birth_month,$birth_day,$birth_year)) {
+    // -> doit etre une date valide   
+    if (//($birth_month!=null && $birth_day!=null && $birth_year!=null) &&
+       !(is_numeric($birth_year) && is_numeric($birth_month) && is_numeric($birth_day))
+       || !checkdate($birth_month,$birth_day,$birth_year)) {
         $save = false;
         setFlashbag("danger", "Veuillez sélectionner une date de naissance valide");
     } else {
@@ -140,7 +143,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
         $birthday = $birth_year."-".$birth_month."-".$birth_day;
 
     }
-    var_dump($birthday);
+   
     // -> doit être supérieur à 13ans au moment de l'inscription
     if (isset($birthday)) {
       $tz  = new DateTimeZone('Europe/Brussels');
@@ -154,22 +157,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
       }
     }
     
-    //function age($birth_month, $birth_day, $birth_year) {
-        // Evaluation de l'âge (à un an par excès)
-        /*$age = date('Y', time()) - $birth_year;
-        if ($birth_month > date('m', time()) || ($birth_month == date('m', time())) && $birth_day >= date('d',time())) {
-            return $age;
-        }
-    }*/
-    /*if (!checkdate($birth_month, $birth_day, $birth_year)) {
-        $save = false;
-        setFlashbag("danger", "Veuillez entrer une date valide.");
-    }
-    elseif ( age($birth_month, $birth_day, $birth_year) < 13 ) {
-        $save = false;
-        setFlashbag("danger", "Vous etes trop jeune pour rentrer.");
-    }*/
-
     // - Controle le genre
     // --
     // -> Le champ doit possèder une valeur (M ou F)
@@ -190,8 +177,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
         setFlashbag("danger", "Veuillez accepter les conditions d'utilisation du service.");
     }
 
+//FIN DU CONTROLE DES CHAMPS
+
    // - Controle l'existance de l'utilisateur dans la BDD
-// -> L'adresse email ne doit pas etre présente dans la BDD (table users)
+    // -> L'adresse email ne doit pas etre présente dans la BDD (table users)
     if ($save) {
         if (userExists($login)) {
             $save = false;
